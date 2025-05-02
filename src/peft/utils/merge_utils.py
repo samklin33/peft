@@ -217,9 +217,9 @@ def ties(
 
 #### Todo: Add new methods, reuse modules in other algorithms ####
 #### e.g. if you want to implement “sce” algorithm ####
-"""
-def sce(task_tensors: List[torch.Tensor],
-    density: float = 1.0,
+def sce(
+    task_tensors: List[torch.Tensor], 
+    density: float = 1.0, 
     majority_sign_method: Literal["total", "frequency"] = "total",
 ) -> torch.Tensor:
     # derive task vectors
@@ -228,8 +228,28 @@ def sce(task_tensors: List[torch.Tensor],
     # C: sum of squares of elements to obtain merging coefficient for each target LLM
     # E: filter elements with minority directions
 
-    return 
-"""
+    task_tensors = torch.stack(task_tensors, dim=0)
+    
+    # Trim (select top-k variance elements in matrices)
+    varience = task_tensors.var(dim=0, unbiased=False)
+    k = int(density * varience.numel())
+    top_k = torch.topk(varience.flatten(), k=k, largest=True)
+    mask = torch.zeros_like(varience, dtype=torch.bool).flatten()
+    mask[top_k] = True
+    mask = mask.view(varience.shape)
+    task_tensors = task_tensors * mask
+    
+    # Calculate the sum of squares of elements
+    sum = (task_tensors ** 2).sum(dim=0)
+
+    # Select majority sign of elements
+    majority = calculate_majority_sign_mask(task_tensors, method=majority_sign_method)
+
+    # weighted sum over majority sign aligned elements
+    aligned_tensors = task_tensors * majority
+    mixed_task_tensors = aligned_tensors.sum(dim=0) / torch.clamp(sum, min=1e-6)
+
+    return  mixed_task_tensors
 
 
 def dare_linear(task_tensors: List[torch.Tensor], weights: torch.Tensor, density: float) -> torch.Tensor:
