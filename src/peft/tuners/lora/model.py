@@ -807,7 +807,7 @@ class LoraModel(BaseTuner):
         density,
         majority_sign_method,
     ):
-        weights = torch.tensor(weights, dtype=torch.float32)
+        # weights = torch.tensor(weights, dtype=torch.float32)
         
         # account weights for LoRA A and B layers.
         valid_weights = []
