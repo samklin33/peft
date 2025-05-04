@@ -806,9 +806,7 @@ class LoraModel(BaseTuner):
         target,
         density,
         majority_sign_method,
-    ):
-        # weights = torch.tensor(weights, dtype=torch.float32)
-        
+    ):        
         # account weights for LoRA A and B layers.
         valid_weights = []
         lora_A_deltas = []
@@ -822,7 +820,7 @@ class LoraModel(BaseTuner):
                 current_adapter_lora_B = target.lora_embedding_B[adapter]
             else:
                 continue
-            valid_weights.append(math.sqrt(weight * target.scaling[adapter]))
+            valid_weights.append(math.sqrt(int(weight) * target.scaling[adapter]))
             lora_A_deltas.append(current_adapter_lora_A.data)
             lora_B_deltas.append(current_adapter_lora_B.data)
         valid_weights = torch.tensor(valid_weights).to(lora_A_deltas[0].device)
