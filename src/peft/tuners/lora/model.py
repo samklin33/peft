@@ -807,10 +807,6 @@ class LoraModel(BaseTuner):
         density,
         majority_sign_method,
     ):        
-        if not isinstance(weights, (list, tuple, torch.Tensor)):
-            weights = [weights]  # Wrap single value in a list
-        weights = torch.tensor(weights, dtype=torch.float32)
-
         # account weights for LoRA A and B layers.
         valid_weights = []
         lora_A_deltas = []
