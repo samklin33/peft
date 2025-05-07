@@ -557,23 +557,23 @@ class LoraModel(BaseTuner):
 
         adapters_ranks = [self.peft_config[adapter].r for adapter in adapters]
         #### Todo: remember to add func names of new methods here here ####
-        if combination_type in ("sce", "linear", "ties", "dare_ties", "dare_linear", "magnitude_prune"):
-            # all adapters ranks should be same, new rank is just this value
-            if len(set(adapters_ranks)) != 1:
-                raise ValueError(
-                    "All adapters must have the same r value when using combination_type linear, ties, dare_ties or "
-                    "dare_linear."
-                )
-            new_rank = adapters_ranks[0]
-        elif combination_type == "cat":
-            # adapters ranks may be different, new rank is sum of all ranks
-            # be careful, because output adapter rank may be really big if mixing a lot of adapters
-            new_rank = sum(adapters_ranks)
-        elif combination_type.endswith("svd"):
-            # new rank is the max of all ranks of the adapters if not provided
-            new_rank = svd_rank or max(adapters_ranks)
-        else:
-            raise ValueError(f"Invalid combination_type: {combination_type}")
+        # if combination_type in ("sce", "linear", "ties", "dare_ties", "dare_linear", "magnitude_prune"):
+        # all adapters ranks should be same, new rank is just this value
+        if len(set(adapters_ranks)) != 1:
+            raise ValueError(
+                "All adapters must have the same r value when using combination_type linear, ties, dare_ties or "
+                "dare_linear."
+            )
+        new_rank = adapters_ranks[0]
+        # elif combination_type == "cat":
+        #     # adapters ranks may be different, new rank is sum of all ranks
+        #     # be careful, because output adapter rank may be really big if mixing a lot of adapters
+        #     new_rank = sum(adapters_ranks)
+        # elif combination_type.endswith("svd"):
+        #     # new rank is the max of all ranks of the adapters if not provided
+        #     new_rank = svd_rank or max(adapters_ranks)
+        # else:
+        #     raise ValueError(f"Invalid combination_type: {combination_type}")
 
         target_module_types = [type(self.peft_config[adapter].target_modules) for adapter in adapters]
         if not target_module_types:
