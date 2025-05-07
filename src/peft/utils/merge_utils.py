@@ -254,7 +254,7 @@ def sce(
     
     task_tensors = torch.stack(task_tensors, dim=0)
 
-    mask = sce_mask(torch.stack(task_tensors, dim=0), density=density)
+    mask = sce_mask(task_tensors, density=density)
     masked_tensor = task_tensors * mask
 
     weights = sce_weight(masked_tensor)
