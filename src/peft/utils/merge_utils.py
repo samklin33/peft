@@ -217,6 +217,35 @@ def ties(
 
 #### Todo: Add new methods, reuse modules in other algorithms ####
 #### e.g. if you want to implement “sce” algorithm ####
+def sce_weight(task_tensors: torch.Tensor) -> torch.Tensor:
+	# Implementation of C step
+    # Compute squared magnitude (energy) per task
+    weights = torch.mean(task_tensors**2, dim=list(range(1, task_tensors.dim())))
+	# Sum all weights to normalize
+    weight_sum = torch.sum(weights).item()
+    # Handle edge case: if all task tensors are 0, fallback to uniform weights
+    if abs(weight_sum) < 1e-6:
+        return torch.ones_like(weights) / weights.shape[0]
+	# Normalize to form a probability distribution over tasks
+    return weights / weight_sum
+
+def sce_mask(task_tensors: torch.Tensor, density: float, mask_dtype: Optional[torch.dtype] = None):
+    # Implementation of S step (sce_mask)
+    if density <= 0: # If density is zero, mask out everything 
+        return torch.zeros_like(task_tensors, dtype=mask_dtype)
+    if density >= 1: # If density is one, keep everything
+        return torch.ones_like(task_tensors, dtype=mask_dtype)
+    var = torch.var(task_tensors, dim=0, unbiased=False) # Compute variance over the task dimension (T) for each parameter
+    nonzero = torch.count_nonzero(var) # Count how many parameters have non-zero variance
+    k = int(nonzero * density) # Compute number of parameters to keep based on density
+    if k == 0:
+        return torch.zeros_like(task_tensors, dtype=mask_dtype)
+    _, indices = torch.topk(var.abs().view(-1), k=k, largest=True) # Select the indices of top-k variances
+    # Build binary mask with 1s in selected indices 
+    mask = torch.zeros_like(var, dtype=mask_dtype)
+    mask.view(-1)[indices] = 1
+    return mask
+
 def sce(
     task_tensors: List[torch.Tensor], 
     density: float = 1.0, 
