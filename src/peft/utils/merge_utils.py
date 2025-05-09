@@ -255,19 +255,19 @@ def sce(
     task_tensors = torch.stack(task_tensors, dim=0)
 
     mask = sce_mask(task_tensors, density=density)
-    masked_tensor = task_tensors * mask
 
-    weights = sce_weight(masked_tensor)
-    
-    majority_sign_mask = calculate_majority_sign_mask(masked_tensor, method=majority_sign_method)
-    
-    # weighted sum over majority sign aligned elements
-    weighted_task_tensors = masked_tensor * weights.view(weights.shape + (1,) * (masked_tensor.dim() - weights.dim()))
-    mixed_task_tensors = (weighted_task_tensors * majority_sign_mask).sum(dim=0)
-    num_params_preserved = majority_sign_mask.sum(dim=0)
-    
-    return mixed_task_tensors / torch.clamp(num_params_preserved, min=1.0)
+    erased_mask = calculate_majority_sign_mask(mask, method=majority_sign_method)
 
+    weights = sce_weight(task_tensors)
+    while weights.dim() < task_tensors.dim():
+        weights = weights.unsqueeze(-1)
+
+    erased_tensors = weights * erased_mask
+    merged_tensors = (task_tensors * erased_tensors).sum(dim=0)
+    final_tensors = merged_tensors / torch.sum(erased_tensors, dim=0).clamp(min=1e-6)
+
+    return final_tensors
+    
 def dare_linear(task_tensors: List[torch.Tensor], weights: torch.Tensor, density: float) -> torch.Tensor:
     """
     Merge the task tensors using `dare linear`.
